@@ -1,0 +1,10 @@
+agents:
+  todo_main:
+    name: 待办主Agent
+    bind_intent: [todo_create]
+  remind_main:
+    name: 提醒主Agent
+    bind_intent: [remind_query]
+  daily21_main:
+    name: 日报主Agent
+    bind_intent: [daily21_report]

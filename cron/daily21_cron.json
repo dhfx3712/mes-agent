@@ -1,0 +1,5 @@
+{
+  "task": "daily21_report",
+  "cron": "0 21 * * *",
+  "tz": "Asia/Shanghai"
+}

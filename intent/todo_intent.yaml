@@ -1,0 +1,8 @@
+intent: todo_create
+examples:
+  - 新增待办
+  - 记录任务
+slots:
+  title: text
+  time: time
+  content: text

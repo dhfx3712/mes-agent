@@ -1,0 +1,3 @@
+flow_name: 21点日报
+cron: 0 21 * * *
+bind_main_agent: daily21_main
