@@ -179,19 +179,112 @@ async def list_uncompleted(user_id=None):
 
 
 async def get_today_stat():
-    """Get today's statistics"""
+    """Get today's detailed statistics for the daily report"""
     items = _fetch_all_records()
-    today = datetime.now().strftime("%Y-%m-%d")
-    today_start = _to_ms_timestamp(today)
+    now = datetime.now()
+    today_str = now.strftime("%Y-%m-%d")
+    today_start = _to_ms_timestamp(today_str)
     today_end = today_start + 86400000 if today_start else 0
 
-    today_items = [
-        item for item in items
-        if today_start <= (item.get("fields", {}).get("创建时间") or 0) < today_end
-    ]
+    today_new = 0
+    today_due_list = []
+    overdue_list = []
+    upcoming_list = []
+    completed_list = []
+    by_user = {}
+
+    for item in items:
+        fields = item.get("fields", {})
+        record_id = item.get("record_id")
+        title = fields.get("待办事项", "")
+        priority = fields.get("优先级")
+        deadline = fields.get("截止日期")
+        completed = fields.get("是否已完成", False)
+        created = fields.get("创建时间")
+
+        # Get executor info
+        executors = fields.get("执行人", []) or []
+        user_names = ", ".join(e.get("name", "") for e in executors)
+
+        # Count today's new items
+        if created and today_start <= created < today_end:
+            today_new += 1
+
+        if completed:
+            # Recently completed (created today or yesterday)
+            if created and created >= today_start - 86400000:
+                completed_list.append({
+                    "title": title, "user": user_names, "priority": priority
+                })
+            continue
+
+        # Uncompleted items - categorize by deadline
+        if deadline is None:
+            continue  # no deadline, skip
+
+        deadline_str = datetime.fromtimestamp(deadline / 1000).strftime("%Y-%m-%d")
+
+        if today_start <= deadline < today_end:
+            # Due today
+            today_due_list.append({
+                "title": title, "priority": priority, "user": user_names,
+                "record_id": record_id
+            })
+        elif deadline < today_start:
+            # Overdue
+            overdue_list.append({
+                "title": title, "priority": priority, "user": user_names,
+                "deadline": deadline_str, "record_id": record_id
+            })
+        else:
+            # Upcoming
+            days_until = int((deadline - today_end) / 86400000) + 1
+            upcoming_list.append({
+                "title": title, "priority": priority, "user": user_names,
+                "deadline": deadline_str, "days_until": days_until,
+                "record_id": record_id
+            })
+
+        # Aggregate by user
+        for e in executors:
+            name = e.get("name", "")
+            if not name:
+                continue
+            if name not in by_user:
+                by_user[name] = {"overdue": 0, "pending": 0, "high_priority": 0}
+            if deadline < today_start:
+                by_user[name]["overdue"] += 1
+            else:
+                by_user[name]["pending"] += 1
+            if priority and "P0" in priority:
+                by_user[name]["high_priority"] += 1
+
+    # Sort lists
+    today_due_list.sort(key=lambda x: x.get("priority", "") or "")
+    overdue_list.sort(key=lambda x: x.get("deadline", ""))
+    upcoming_list.sort(key=lambda x: x.get("days_until", 999))
 
     return {
-        "todo_cnt": len(today_items),
-        "remind_cnt": len(today_items),
-        "date": today
+        "date": today_str,
+        "summary": {
+            "today_new": today_new,
+            "today_due": len(today_due_list),
+            "overdue": len(overdue_list),
+            "upcoming": len(upcoming_list),
+            "completed_today": len(completed_list),
+            "total_uncompleted": _count_uncompleted(items),
+        },
+        "today_due": today_due_list,
+        "overdue": overdue_list,
+        "upcoming": upcoming_list,
+        "completed": completed_list,
+        "grouped_by_user": by_user,
     }
+
+
+def _count_uncompleted(items):
+    cnt = 0
+    for item in items:
+        if not item.get("fields", {}).get("是否已完成", False):
+            cnt += 1
+    return cnt
