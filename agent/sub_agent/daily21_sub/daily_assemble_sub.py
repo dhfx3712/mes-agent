@@ -37,15 +37,7 @@ class DailyAssembleSub:
                 lines.append(f"1. **{t['title']}** → {t['user']} | {p}")
             lines.append("")
 
-        # Overdue
-        if overdue:
-            lines.append("⏰ **已延期（逾期未完成）**")
-            for t in overdue:
-                p = "🔴P0" if "P0" in (t.get("priority") or "") else "🟡P1"
-                lines.append(f"- **{t['title']}** → {t['user']} | {p} | 原定{t['deadline']}")
-            lines.append("")
-
-        # Upcoming
+        # Upcoming - only future, non-overdue tasks
         if upcoming:
             lines.append("📅 **即将到期**")
             for t in upcoming[:10]:  # top 10
@@ -55,13 +47,11 @@ class DailyAssembleSub:
                 lines.append(f"- ...还有 {len(upcoming) - 10} 条")
             lines.append("")
 
-        # By user aggregation
+        # By user aggregation - exclude overdue from counts
         if by_user:
             lines.append("👤 **按负责人统计**")
-            for name, v in sorted(by_user.items(), key=lambda x: -x[1]["overdue"]):
+            for name, v in sorted(by_user.items(), key=lambda x: -x[1].get("pending", 0)):
                 parts = []
-                if v["overdue"]:
-                    parts.append(f"延期{v['overdue']}条")
                 if v["pending"]:
                     parts.append(f"待办{v['pending']}条")
                 if v["high_priority"]:
@@ -76,11 +66,8 @@ class DailyAssembleSub:
                 lines.append(f"- {t['title']} ✅{'（' + t['user'] + '）' if t.get('user') else ''}")
             lines.append("")
 
-        # Suggestion
-        long_overdue_users = [n for n, v in by_user.items() if v.get("overdue", 0) >= 3]
-        if long_overdue_users:
-            lines.append("💡 **建议：** " +
-                         f"{'、'.join(long_overdue_users)}有大量已延期任务，建议清点后删除或重新设定截止日期。")
+        # Suggestion - no more overdue references
+        lines.append("💡 **建议：** 请尽快处理高优和今日到期的任务，定期清理延期任务。")
 
         content = "\n".join(lines)
         return {"success": True, "data": content}

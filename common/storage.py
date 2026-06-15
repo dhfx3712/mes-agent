@@ -188,7 +188,6 @@ async def get_today_stat():
 
     today_new = 0
     today_due_list = []
-    overdue_list = []
     upcoming_list = []
     completed_list = []
     by_user = {}
@@ -218,7 +217,7 @@ async def get_today_stat():
                 })
             continue
 
-        # Uncompleted items - categorize by deadline
+        # Uncompleted items - categorize by deadline (SKIP OVERDUE ITEMS)
         if deadline is None:
             continue  # no deadline, skip
 
@@ -230,13 +229,7 @@ async def get_today_stat():
                 "title": title, "priority": priority, "user": user_names,
                 "record_id": record_id
             })
-        elif deadline < today_start:
-            # Overdue
-            overdue_list.append({
-                "title": title, "priority": priority, "user": user_names,
-                "deadline": deadline_str, "record_id": record_id
-            })
-        else:
+        elif deadline > today_end:  # ONLY future/upcoming, SKIP OVERDUE
             # Upcoming
             days_until = int((deadline - today_end) / 86400000) + 1
             upcoming_list.append({
@@ -245,23 +238,20 @@ async def get_today_stat():
                 "record_id": record_id
             })
 
-        # Aggregate by user
+        # Aggregate by user - ONLY COUNT NON-OVERDUE PENDING
         for e in executors:
             name = e.get("name", "")
             if not name:
                 continue
             if name not in by_user:
-                by_user[name] = {"overdue": 0, "pending": 0, "high_priority": 0}
-            if deadline < today_start:
-                by_user[name]["overdue"] += 1
-            else:
+                by_user[name] = {"pending": 0, "high_priority": 0}
+            if deadline > today_end:  # ONLY count future tasks for pending
                 by_user[name]["pending"] += 1
             if priority and "P0" in priority:
                 by_user[name]["high_priority"] += 1
 
     # Sort lists
     today_due_list.sort(key=lambda x: x.get("priority", "") or "")
-    overdue_list.sort(key=lambda x: x.get("deadline", ""))
     upcoming_list.sort(key=lambda x: x.get("days_until", 999))
 
     return {
@@ -269,13 +259,13 @@ async def get_today_stat():
         "summary": {
             "today_new": today_new,
             "today_due": len(today_due_list),
-            "overdue": len(overdue_list),
+            "overdue": 0,  # REMOVE OVERDUE COUNT
             "upcoming": len(upcoming_list),
             "completed_today": len(completed_list),
             "total_uncompleted": _count_uncompleted(items),
         },
         "today_due": today_due_list,
-        "overdue": overdue_list,
+        "overdue": [],  # EMPTY OVERDUE LIST
         "upcoming": upcoming_list,
         "completed": completed_list,
         "grouped_by_user": by_user,
