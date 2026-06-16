@@ -1,3 +1,4 @@
 .openclaw 
 __pycache__/
 memory/
+agent/plugins/

@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 BASE = "IR19b1JZJa1shNsA9zCc3QIMnEh"
 TABLE = "tbljSyRPEgXmWUYF"
-CONFIG_PATH = "/root/.openclaw/openclaw.json"
+CONFIG_PATH = "/home/ubuntu/.openclaw/openclaw.json"
 TOKEN_URL = "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal"
 API_URL = "https://open.feishu.cn/open-apis/bitable/v1/apps"
 
@@ -12,7 +12,9 @@ API_URL = "https://open.feishu.cn/open-apis/bitable/v1/apps"
 def _get_credentials():
     with open(CONFIG_PATH) as f:
         cfg = json.load(f)
-    for acct in cfg["channels"]["feishu"]["accounts"]:
+    accounts = cfg["channels"]["feishu"]["accounts"]
+    # accounts is a dict keyed by account name
+    for name, acct in accounts.items():
         if acct.get("appId") == "cli_a95451a74db8dcd2":
             return acct["appId"], acct["appSecret"]
     raise RuntimeError("Feishu credentials not found in config")
