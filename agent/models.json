@@ -24,6 +24,52 @@
           "api": "openai-completions"
         }
       ]
+    },
+    "deepseek": {
+      "baseUrl": "https://api.deepseek.com/v1",
+      "apiKey": "sk-f2ddfe3e161b4bc683f34e0a3f6bfb78",
+      "api": "openai-completions",
+      "models": [
+        {
+          "id": "deepseek-chat",
+          "name": "DeepSeek通用对话",
+          "reasoning": false,
+          "contextWindow": 128000,
+          "maxTokens": 8192,
+          "cost": {
+            "input": 0.28,
+            "output": 0.42,
+            "cacheRead": 0.028,
+            "cacheWrite": 0
+          }
+        },
+        {
+          "id": "deepseek-reasoner",
+          "name": "DeepSeek-R1推理模型",
+          "reasoning": true,
+          "contextWindow": 128000,
+          "maxTokens": 8192,
+          "cost": {
+            "input": 0.28,
+            "output": 0.42,
+            "cacheRead": 0.028,
+            "cacheWrite": 0
+          }
+        },
+        {
+          "id": "deepseek-v4-flash",
+          "name": "DeepSeek-V4极速版",
+          "reasoning": true,
+          "contextWindow": 128000,
+          "maxTokens": 8192,
+          "cost": {
+            "input": 0.14,
+            "output": 0.28,
+            "cacheRead": 0.028,
+            "cacheWrite": 0
+          }
+        }
+      ]
     }
   }
 }
