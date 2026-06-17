@@ -19,7 +19,7 @@ if _ws_root not in sys.path:
     sys.path.insert(0, _ws_root)
 
 from common.storage import get_today_stat
-from skill.daily21_skill.send_report_skill import exec as send_report
+from common.config import get, get_feishu_credentials
 
 
 def _assemble(data):
@@ -101,8 +101,7 @@ async def main():
     do_send = "--send" in sys.argv
 
     if do_send:
-        # Send to Feishu (was send_report_skill)
-        ok = await send_report(content)
+        ok = await _send_report(content)
         if not ok:
             print(json.dumps({"status": "error", "error": "日报推送失败"}))
             return
@@ -111,6 +110,44 @@ async def main():
         "status": "success",
         "data": {"content": content}
     }, ensure_ascii=False))
+
+
+async def _send_report(content):
+    """Send daily report to 工单系统 group chat"""
+    import requests
+
+    TOKEN_URL = "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal"
+    MSG_URL = "https://open.feishu.cn/open-apis/im/v1/messages"
+
+    app_id, app_secret = get_feishu_credentials("messaging")
+    resp = requests.post(TOKEN_URL, json={"app_id": app_id, "app_secret": app_secret})
+    token = resp.json()["tenant_access_token"]
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json; charset=utf-8"
+    }
+
+    chat_id = get("feishu.chat_id")
+    payload = {
+        "receive_id": chat_id,
+        "msg_type": "post",
+        "content": json.dumps({
+            "zh_cn": {
+                "title": "📋 21点日报",
+                "content": [[{"tag": "text", "text": content}]]
+            }
+        })
+    }
+
+    resp = requests.post(f"{MSG_URL}?receive_id_type=chat_id", headers=headers, json=payload)
+    result = resp.json()
+    if result.get("code") != 0:
+        print(f"[日报推送失败] {result}")
+        return False
+
+    print(f"[日报推送成功] message_id={result.get('data', {}).get('message_id')}")
+    return True
 
 
 if __name__ == "__main__":

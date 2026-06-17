@@ -8,20 +8,17 @@
 ```
 workspace-mes/
 ├── agents/             # Agent 配置目录
-│   ├── main-agent/     # 主Agent 身份+技能
-│   └── sub_agent/      # 子Agent（自建框架）
-├── common/             # 共享工具函数
-├── datas/              # 共享数据目录
-│   ├── config.json     # 全局超参数（TODO: 从 CONFIG.md 迁移）
-│   └── logs/           # 运行日志
-├── flow/               # Flow 定义（自建框架）
-├── intent/             # 意图定义（自建框架）
+├── scripts/            # 业务脚本
+│   └── cli/            # 独立 CLI 脚本（核心业务）
+├── common/             # 公共模块（storage/config）
+├── datas/              # 结构化配置
+│   ├── config.json     # 全局配置
+│   └── config.schema.json  # 配置校验规则
 ├── memory/             # 三层记忆系统
 │   ├── MEMORY.md       # Layer 1: 永久知识库
 │   ├── README.md       # 记忆系统使用说明
 │   └── entities/       # Layer 3: 实体注册表
-├── scripts/            # 业务脚本
-├── skill/              # 技能定义（自建框架）
+├── _archive/           # 旧自建框架（回滚备选）
 ├── AGENTS.md           # Agent 架构
 ├── BOOTSTRAP.md        # 启动引导
 ├── HEARTBEAT.md        # 心跳任务
@@ -35,11 +32,11 @@ workspace-mes/
 
 ## 快速开始
 
-1. 确认 `CONFIG.md` 配置正确（TODO: 迁移至 `datas/config.json`）
+1. 确认 `datas/config.json` 配置正确
 2. 查看 `BOOTSTRAP.md` 了解启动就绪状态
 3. 通过 OpenClaw 加载项目目录
 4. 使用 `/` 指令与 Agent 交互
 
 ## 配置说明
 
-所有全局参数统一存放在 `CONFIG.md`（待迁移至 `datas/config.json`）。
+所有全局参数统一存放在 `datas/config.json`，`CONFIG.md` 作为参考文档。

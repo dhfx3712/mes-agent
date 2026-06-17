@@ -32,7 +32,7 @@
 ### 脚本就绪
 - [x] Python 虚拟环境已创建（`scripts/.venv/`）
 - [ ] 依赖已安装（`scripts/requirements.txt`）
-- [x] 业务脚本已编写（`common/` + `skill/` + `flow/`）
+- [x] 业务脚本已编写（`scripts/cli/` + `common/`）
 - [ ] 脚本输入输出格式符合集成契约
 
 ### 定时任务就绪
@@ -45,14 +45,11 @@
 - [ ] 状态机定义与实际逻辑一致
 - [ ] 数据流与实际实现一致
 
-### 复杂业务就绪（flow/skill 分层架构）
-- [x] 自建 flow/skill 分层架构已运行
-- [x] `scripts/cli/` 独立 CLI 脚本已创建（todo_create / remind_query / daily21_report）
-- [x] `flow/` 目录已创建，每个业务一个 flow 目录
-- [x] `skill/` 目录已创建，原子技能已拆分
-- [x] `common/` 目录已创建，共享工具函数已提取
+### 复杂业务就绪（scripts/cli/ 独立脚本）
+- [x] 3 个 CLI 脚本已实现（todo_create / remind_query / daily21_report）
+- [x] 配置集中化（`datas/config.json` + `common/config.py`）
+- [x] 旧自建框架已归档至 `_archive/`
 - [x] SOUL.md 路由表已配置（AI 只做意图识别 + 参数提取）
-- [x] 每个 skill 可独立运行测试通过
 
 ---
 
@@ -61,7 +58,7 @@
 ```
 Step 1: 确认配置  →  检查 CONFIG.md 飞书配置
 Step 2: 连接底座  →  验证飞书 Bitable 可正常读写
-Step 3: 测试脚本  →  逐个运行 flow/ 下的 flow 验证
+Step 3: 测试脚本  →  逐个运行 scripts/cli/ 下的脚本验证
 Step 4: 注册 cron →  注册 daily21 定时任务
 Step 5: 验收指令  →  逐条测试 TOOLS.md 中的指令
 Step 6: 正式使用  →  开始录入数据
@@ -73,5 +70,5 @@ Step 6: 正式使用  →  开始录入数据
 
 - [ ] CONFIG.md → `datas/config.json` + `datas/config.schema.json` 迁移
 - [ ] 新增 `ARCHITECTURE.md` 架构设计文档
-- [ ] 自建框架（intent/flow/skill/agent）→ OpenClaw 原生机制迁移
+- [x] 自建框架（intent/flow/skill/agent）→ 独立 CLI 脚本迁移完成
 - [ ] 脚本输入输出格式标准化为 JSON
