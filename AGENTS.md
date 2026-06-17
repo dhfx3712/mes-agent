@@ -58,7 +58,19 @@
 ## 架构约束
 
 1. **职责单一**：每个 Agent/脚本只做一件事
-2. **数据流单向**：主 Agent → 子 Agent → 数据层，不反向依赖
-3. **错误向上传递**：子 Agent 错误 → 主 Agent 处理 → 用户
-4. **配置集中**：所有参数统一在 CONFIG.md 管理（待迁移至 datas/config.json）
-5. **脚本调用**：通过 `run_flow.py` 桥接，AI 只做意图识别 + 参数提取
+2. **数据流单向**：主 Agent → 脚本 → 数据层，不反向依赖
+3. **错误向上传递**：脚本错误 → 主 Agent 处理 → 用户
+4. **配置集中**：结构化配置在 `datas/config.json`，参考配置在 `CONFIG.md`
+5. **脚本调用**：通过 `exec` 直接调用 `scripts/cli/*.py`，AI 只做意图识别 + 参数提取
+
+## 调用方式
+
+当前架构已从自建框架（`run_flow.py` → `flow/` → `agent/`）升级为独立 CLI 脚本：
+
+```
+用户输入 → AI 提取参数 → exec scripts/cli/<flow>.py '<slots>' '<ctx>'
+  → 直接调用 common/storage.py → 飞书 Bitable
+```
+
+旧版 `run_flow.py` 及 `flow/`、`agent/` 目录保留作为回滚备选。
+详见 `SOUL.md` 路由规则和 `SCRIPTS.md` 脚本规范。

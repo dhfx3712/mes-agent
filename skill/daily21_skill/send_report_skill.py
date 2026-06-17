@@ -1,24 +1,14 @@
 import json
 import requests
 
-CONFIG_PATH = "/home/ubuntu/.openclaw/openclaw.json"
+from common.config import get, get_feishu_credentials
+
 TOKEN_URL = "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal"
 MSG_URL = "https://open.feishu.cn/open-apis/im/v1/messages"
-CHAT_ID = "oc_fee9651792b581c45e503db890cd4cf1"
-
-
-def _get_credentials():
-    with open(CONFIG_PATH) as f:
-        cfg = json.load(f)
-    accounts = cfg["channels"]["feishu"]["accounts"]
-    for name, acct in accounts.items():
-        if acct.get("appId") == "cli_aa9d533eca3cdbe9":
-            return acct["appId"], acct["appSecret"]
-    raise RuntimeError("Feishu credentials not found in config")
 
 
 def _get_token():
-    app_id, app_secret = _get_credentials()
+    app_id, app_secret = get_feishu_credentials("messaging")
     resp = requests.post(TOKEN_URL, json={
         "app_id": app_id,
         "app_secret": app_secret
@@ -34,9 +24,10 @@ async def exec(content):
         "Content-Type": "application/json; charset=utf-8"
     }
 
+    chat_id = get("feishu.chat_id")
     # Send as post (rich text card)
     payload = {
-        "receive_id": CHAT_ID,
+        "receive_id": chat_id,
         "msg_type": "post",
         "content": json.dumps({
             "zh_cn": {

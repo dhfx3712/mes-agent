@@ -36,7 +36,7 @@
 - [ ] 脚本输入输出格式符合集成契约
 
 ### 定时任务就绪
-- [x] daily21 日报 cron 已注册（`cron/daily21_cron.json`）
+- [x] daily21 日报 cron 已注册（OpenClaw cron job `mes-daily21-report`）
 - [x] 任务触发动作已验证
 - [ ] 失败处理策略已确认
 
@@ -47,7 +47,7 @@
 
 ### 复杂业务就绪（flow/skill 分层架构）
 - [x] 自建 flow/skill 分层架构已运行
-- [x] `run_flow.py` 桥接脚本已创建
+- [x] `scripts/cli/` 独立 CLI 脚本已创建（todo_create / remind_query / daily21_report）
 - [x] `flow/` 目录已创建，每个业务一个 flow 目录
 - [x] `skill/` 目录已创建，原子技能已拆分
 - [x] `common/` 目录已创建，共享工具函数已提取

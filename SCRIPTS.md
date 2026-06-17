@@ -52,7 +52,7 @@ exec python3 scripts/cli/my_script.py --arg value
 
 | 类型 | 生命周期 | 说明 | 示例 |
 |------|---------|------|------|
-| **cli** | 按需调用 | 命令行客户端，每次调用启动子进程 | run_flow.py |
+| **cli** | 按需调用 | 命令行客户端，每次调用启动子进程 | todo_create.py / remind_query.py / daily21_report.py |
 | **one-shot** | 按需调用 | 普通业务脚本，每次调用独立运行 | skill 子脚本 |
 
 ---
@@ -66,8 +66,8 @@ scripts/
 └── utils/         # 工具函数类
 ```
 
-> 当前脚本分散在 `common/`、`skill/`、`flow/`、`agent/` 目录下，
-> 待 Step 2 迁移至 `scripts/` 标准目录。
+> 当前核心脚本已迁移至 `scripts/cli/`。
+> `flow/`、`agent/` 等旧目录保留作为回滚备选。
 
 ---
 
@@ -79,49 +79,24 @@ scripts/
 
 ```
 用户输入 → AI 提取参数(title/time/priority/content/执行人)
-  → exec run_flow.py todo_create '<slots>' '<ctx>'
-    → flow/todo_create_flow/
-      → skill/todo_skill/rule_check_skill.py
-      → skill/todo_skill/save_todo_skill.py
-        → common/storage.py → 飞书 Bitable
+  → exec scripts/cli/todo_create.py '<slots>' '<ctx>'
+    → common/storage.py → 飞书 Bitable
 ```
-
-**并发策略：**
-- 可并发执行：无
-- 需串行执行：rule_check → save_todo
-
-**编排说明：**
-AI 只做意图识别 + 参数提取，通过 run_flow.py 桥接脚本将确定性逻辑交给 Python 代码执行。
 
 #### 查询提醒
 
 ```
 用户输入 → AI 提取参数(days/user_id)
-  → exec run_flow.py remind_query '<slots>' '<ctx>'
-    → flow/remind_query_flow/
-      → skill/remind_skill/db_query_skill.py
-      → skill/remind_skill/time_filter_skill.py
-        → common/storage.py → 飞书 Bitable
+  → exec scripts/cli/remind_query.py '<slots>' '<ctx>'
+    → common/storage.py → 飞书 Bitable
 ```
-
-**并发策略：**
-- 可并发执行：无
-- 需串行执行：db_query → time_filter
 
 #### 21点日报
 
 ```
-cron 触发 → exec run_flow.py daily21 '{}' '{}'
-  → flow/daily21_report_flow/
-    → skill/daily21_skill/data_fetch_skill.py
-    → skill/daily21_skill/calc_skill.py
-    → skill/daily21_skill/send_report_skill.py
-      → common/storage.py → 飞书 Bitable
+cron 触发 → exec scripts/cli/daily21_report.py --send
+  → common/storage.py + send_report_skill.py → 飞书群
 ```
-
-**并发策略：**
-- 可并发执行：无
-- 需串行执行：data_fetch → calc → send_report
 
 ### 通用编排原则
 
@@ -130,17 +105,20 @@ cron 触发 → exec run_flow.py daily21 '{}' '{}'
 3. **AI 介入点**：脚本无法完成的部分（如生成内容、智能判断）由 AI 处理
 4. **结果合并**：并行结果全部返回后，由 AI 统一组装
 
-### 复杂业务编排（flow/skill 分层架构）
+### 架构说明
 
-当前项目已采用 flow/skill 分层架构：
+当前架构已从自建框架（`run_flow.py` → `flow/` → `agent/` → `skill/`）
+升级为独立 CLI 脚本，直接调用 `common/storage.py` 数据层：
 
 ```
 AI 层（SOUL.md 路由表）
-  ↓ exec run_flow.py <flow_name> '<slots>' '<ctx>'
-桥接层（run_flow.py）
+  ↓ exec scripts/cli/<flow>.py '<slots>' '<ctx>'
+脚本层（scripts/cli/）
   ↓
-流程层（flow/）→ 技能层（skill/）→ 公共层（common/）→ 数据层
+数据层（common/storage.py）→ 飞书 Bitable
 ```
+
+旧版 `run_flow.py`、`flow/`、`agent/` 目录保留作为回滚备选。
 
 ---
 

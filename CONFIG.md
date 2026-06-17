@@ -33,22 +33,24 @@
 - 🟡P1-一般（默认）
 - 🟢P2-低优（不急）
 
-## Flow 调用规范
+## 脚本调用规范
 ```bash
-python3 run_flow.py <flow_name> '<slots_json>' '<ctx_json>'
+python3 scripts/cli/<script>.py '<slots_json>' '<ctx_json>'
 ```
 
-| flow_name | 功能 | slots | ctx |
-|-----------|------|-------|-----|
-| todo_create | 新增待办 | title(必填), time, content, priority | user_id |
-| remind_query | 查询提醒 | days(默认1) | user_id |
-| daily21 | 21点日报 | 无 | 无 |
+| 脚本 | 功能 | slots | ctx |
+|------|------|-------|-----|
+| todo_create.py | 新增待办 | title(必填), time, content, priority | user_id |
+| remind_query.py | 查询提醒 | days(默认1) | user_id |
+| daily21_report.py | 21点日报 | 无 | 无 |
+
+> 旧版 `run_flow.py` 已废弃，保留作为回滚备选。
 
 ## 路由规则
-1. **新增待办** → `todo_create`：提取 title/time/priority/content，确定执行人（"我"=当前用户，他人查映射表）
-2. **查询提醒** → `remind_query`：提取 days(默认1)/user_id
-3. **21点日报** → `daily21`：cron 自动触发
-4. **快速查询**（不走flow）→ `feishu_bitable_list_records` + 本地过滤
+1. **新增待办** → `scripts/cli/todo_create.py`：提取 title/time/priority/content，确定执行人（"我"=当前用户，他人查映射表）
+2. **查询提醒** → `scripts/cli/remind_query.py`：提取 days(默认1)/user_id
+3. **21点日报** → `scripts/cli/daily21_report.py --send`：cron 自动触发
+4. **快速查询**（不走脚本）→ `feishu_bitable_list_records` + 本地过滤
 
 ## 待办标题最大长度
 100

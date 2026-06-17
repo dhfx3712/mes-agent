@@ -1,27 +1,14 @@
-import json
 import requests
-from datetime import datetime, timezone
+from datetime import datetime
 
-BASE = "IR19b1JZJa1shNsA9zCc3QIMnEh"
-TABLE = "tbljSyRPEgXmWUYF"
-CONFIG_PATH = "/home/ubuntu/.openclaw/openclaw.json"
+from common.config import get, get_feishu_credentials
+
 TOKEN_URL = "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal"
 API_URL = "https://open.feishu.cn/open-apis/bitable/v1/apps"
 
 
-def _get_credentials():
-    with open(CONFIG_PATH) as f:
-        cfg = json.load(f)
-    accounts = cfg["channels"]["feishu"]["accounts"]
-    # accounts is a dict keyed by account name
-    for name, acct in accounts.items():
-        if acct.get("appId") == "cli_a95451a74db8dcd2":
-            return acct["appId"], acct["appSecret"]
-    raise RuntimeError("Feishu credentials not found in config")
-
-
 def _get_token():
-    app_id, app_secret = _get_credentials()
+    app_id, app_secret = get_feishu_credentials("bitable")
     resp = requests.post(TOKEN_URL, json={
         "app_id": app_id,
         "app_secret": app_secret
@@ -35,8 +22,10 @@ def _headers():
 
 def _fetch_all_records():
     """Fetch up to 1000 records (no filter, all fields returned)"""
+    base = get("bitable.base_app_id")
+    table = get("bitable.table_id")
     resp = requests.get(
-        f"{API_URL}/{BASE}/tables/{TABLE}/records",
+        f"{API_URL}/{base}/tables/{table}/records",
         headers=_headers(),
         params={"page_size": 500}
     )
@@ -47,7 +36,7 @@ def _fetch_all_records():
     page_token = data.get("data", {}).get("page_token")
     while page_token:
         resp = requests.get(
-            f"{API_URL}/{BASE}/tables/{TABLE}/records",
+            f"{API_URL}/{base}/tables/{table}/records",
             headers=_headers(),
             params={"page_size": 500, "page_token": page_token}
         )
@@ -102,8 +91,10 @@ async def save_todo(user_id, data):
     if user_id and user_id.startswith("ou_"):
         fields["执行人"] = [{"id": user_id}]
 
+    base = get("bitable.base_app_id")
+    table = get("bitable.table_id")
     resp = requests.post(
-        f"{API_URL}/{BASE}/tables/{TABLE}/records",
+        f"{API_URL}/{base}/tables/{table}/records",
         headers=_headers(),
         json={"fields": fields}
     )
