@@ -2,3 +2,6 @@
 __pycache__/
 memory/
 agent/plugins/
+scripts/.venv/
+*.pyc
+.DS_Store
