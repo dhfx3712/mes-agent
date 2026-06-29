@@ -26,6 +26,7 @@
 | 黄泡泡 | ou_71c967f85c3e8022c4331fa3ffac1826 |
 | 白小丁 | ou_c1411be3fd804acdeba1d36639c3dba0 |
 | 李阳 | ou_8ba41bd5afdf8b5bba14eaf1e89800c5 |
+| 小羊羊 | ou_230036538ced69467e567354fcf64cfb |
 | 用户765969 | ou_4c9b0020833a979373d21a892f2d33ea |
 
 ## 优先级选项
@@ -41,19 +42,16 @@ python3 scripts/cli/<script>.py '<slots_json>' '<ctx_json>'
 | 脚本 | 功能 | slots | ctx |
 |------|------|-------|-----|
 | todo_create.py | 新增待办 | title(必填), time, content, priority | user_id |
-| remind_query.py | 查询提醒 | days(默认1) | user_id |
 | daily21_report.py | 21点日报 | 无 | 无 |
 
 > 旧版 `run_flow.py` 已废弃，保留作为回滚备选。
 
 ## 路由规则
 1. **新增待办** → `scripts/cli/todo_create.py`：提取 title/time/priority/content，确定执行人（"我"=当前用户，他人查映射表）
-2. **查询提醒** → `scripts/cli/remind_query.py`：提取 days(默认1)/user_id
-3. **21点日报** → `scripts/cli/daily21_report.py --send`：cron 自动触发
-4. **快速查询**（不走脚本）→ `feishu_bitable_list_records` + 本地过滤
+2. **21点日报** → `scripts/cli/daily21_report.py --send`：cron 自动触发
+3. **快速查询**（不走脚本）→ `feishu_bitable_list_records` + 本地过滤
 
 ## 待办标题最大长度
 100
 
-## 默认查询范围
-最近 1 天
+

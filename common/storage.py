@@ -1,7 +1,10 @@
 import requests
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 from common.config import get, get_feishu_credentials
+
+# Asia/Shanghai timezone (UTC+8)
+_TZ_SHANGHAI = timezone(timedelta(hours=8))
 
 TOKEN_URL = "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal"
 API_URL = "https://open.feishu.cn/open-apis/bitable/v1/apps"
@@ -20,14 +23,49 @@ def _headers():
     return {"Authorization": f"Bearer {_get_token()}"}
 
 
-def _fetch_all_records():
-    """Fetch up to 1000 records (no filter, all fields returned)"""
+def _fetch_quick_query_records():
+    """Fetch records filtered by quick query view (used by list_uncompleted)"""
     base = get("bitable.base_app_id")
     table = get("bitable.table_id")
+    view_id = get("bitable.quick_query_view_id")
+    params = {"page_size": 500}
+    if view_id:
+        params["view_id"] = view_id
     resp = requests.get(
         f"{API_URL}/{base}/tables/{table}/records",
         headers=_headers(),
-        params={"page_size": 500}
+        params=params
+    )
+    data = resp.json()
+    items = data.get("data", {}).get("items", [])
+
+    page_token = data.get("data", {}).get("page_token")
+    while page_token:
+        params["page_token"] = page_token
+        resp = requests.get(
+            f"{API_URL}/{base}/tables/{table}/records",
+            headers=_headers(),
+            params=params
+        )
+        data = resp.json()
+        items.extend(data.get("data", {}).get("items", []))
+        page_token = data.get("data", {}).get("page_token")
+
+    return items
+
+
+def _fetch_view_records():
+    """Fetch records filtered by configured view (used by daily report)"""
+    base = get("bitable.base_app_id")
+    table = get("bitable.table_id")
+    view_id = get("bitable.view_id")
+    params = {"page_size": 500}
+    if view_id:
+        params["view_id"] = view_id
+    resp = requests.get(
+        f"{API_URL}/{base}/tables/{table}/records",
+        headers=_headers(),
+        params=params
     )
     data = resp.json()
     items = data.get("data", {}).get("items", [])
@@ -35,10 +73,11 @@ def _fetch_all_records():
     # Handle pagination
     page_token = data.get("data", {}).get("page_token")
     while page_token:
+        params["page_token"] = page_token
         resp = requests.get(
             f"{API_URL}/{base}/tables/{table}/records",
             headers=_headers(),
-            params={"page_size": 500, "page_token": page_token}
+            params=params
         )
         data = resp.json()
         items.extend(data.get("data", {}).get("items", []))
@@ -48,13 +87,17 @@ def _fetch_all_records():
 
 
 def _to_ms_timestamp(date_str):
-    """Convert 'YYYY-MM-DD' or 'YYYY/MM/DD' to ms timestamp"""
+    """Convert date string to ms timestamp (Asia/Shanghai)
+
+    Supports formats:
+      - YYYY-MM-DD or YYYY/MM/DD (date only)
+      - YYYY-MM-DD HH:MM (with time component)
+    """
     if not date_str:
         return None
-    for fmt in ("%Y-%m-%d", "%Y/%m/%d"):
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%Y-%m-%d %H:%M"):
         try:
-            dt = datetime.strptime(date_str, fmt)
-            # Use local time (Asia/Shanghai = UTC+8)
+            dt = datetime.strptime(date_str, fmt).replace(tzinfo=_TZ_SHANGHAI)
             return int(dt.timestamp() * 1000)
         except ValueError:
             continue
@@ -104,50 +147,13 @@ async def save_todo(user_id, data):
     return result.get("data", {}).get("record", {}).get("record_id")
 
 
-async def get_user_remind(user_id, days=1):
-    """Get recent reminders for a user"""
-    items = _fetch_all_records()
-    now = datetime.now()
-
-    result_list = []
-    for item in items:
-        fields = item.get("fields", {})
-
-        # Filter by user
-        executor_ids = _get_executor_ids(fields)
-        if user_id not in executor_ids:
-            continue
-
-        # Filter by creation time (within N days)
-        created = fields.get("创建时间")
-        if created:
-            created_dt = datetime.fromtimestamp(created / 1000)
-            if (now - created_dt).days > days:
-                continue
-
-        result_list.append({
-            "title": fields.get("待办事项", ""),
-            "remind_time": fields.get("截止日期"),
-            "record_id": item.get("record_id"),
-            "completed": fields.get("是否已完成", False),
-            "priority": fields.get("优先级"),
-        })
-
-    return result_list
-
-
 async def list_uncompleted(user_id=None):
     """List uncompleted todos, optionally filtered by user"""
-    items = _fetch_all_records()
-    now_ms = datetime.now().timestamp() * 1000
+    items = _fetch_quick_query_records()
 
     result_list = []
     for item in items:
         fields = item.get("fields", {})
-
-        # Skip completed
-        if fields.get("是否已完成", False):
-            continue
 
         # Filter by user if specified
         if user_id:
@@ -155,16 +161,12 @@ async def list_uncompleted(user_id=None):
             if user_id not in executor_ids:
                 continue
 
-        deadline = fields.get("截止日期")
-        deadline_passed = deadline is not None and deadline < now_ms
-
         result_list.append({
             "record_id": item.get("record_id"),
             "title": fields.get("待办事项", ""),
-            "deadline": deadline,
+            "deadline": fields.get("截止日期"),
             "priority": fields.get("优先级"),
             "executor": fields.get("执行人"),
-            "deadline_passed": deadline_passed,
             "distance": fields.get("距离截止日"),
         })
 
@@ -173,8 +175,8 @@ async def list_uncompleted(user_id=None):
 
 async def get_today_stat():
     """Get today's detailed statistics for the daily report"""
-    items = _fetch_all_records()
-    now = datetime.now()
+    items = _fetch_view_records()
+    now = datetime.now(_TZ_SHANGHAI)
     today_str = now.strftime("%Y-%m-%d")
     today_start = _to_ms_timestamp(today_str)
     today_end = today_start + 86400000 if today_start else 0
@@ -214,7 +216,7 @@ async def get_today_stat():
         if deadline is None:
             continue  # no deadline, skip
 
-        deadline_str = datetime.fromtimestamp(deadline / 1000).strftime("%Y-%m-%d")
+        deadline_str = datetime.fromtimestamp(deadline / 1000, tz=_TZ_SHANGHAI).strftime("%Y-%m-%d")
 
         if today_start <= deadline < today_end:
             # Due today

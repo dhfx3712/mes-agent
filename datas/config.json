@@ -18,7 +18,8 @@
   "bitable": {
     "base_app_id": "IR19b1JZJa1shNsA9zCc3QIMnEh",
     "table_id": "tbljSyRPEgXmWUYF",
-    "view_id": "vews7iyQGJ",
+    "view_id": "vewCzvI033",
+    "quick_query_view_id": "vewGQCgbFx",
     "fields": {
       "title": { "id": "fldO8jwfSy", "type": "Text", "desc": "待办事项" },
       "summary": { "id": "fldIVCf1AS", "type": "Text", "desc": "AI 待办事项汇总" },
@@ -57,12 +58,6 @@
       "description": "新增待办",
       "required_slots": ["title"],
       "optional_slots": ["time", "content", "priority"],
-      "ctx": ["user_id"]
-    },
-    "remind_query": {
-      "description": "查询提醒",
-      "optional_slots": ["days"],
-      "defaults": { "days": 1 },
       "ctx": ["user_id"]
     },
     "daily21": {

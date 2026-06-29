@@ -5,3 +5,4 @@ agent/plugins/
 scripts/.venv/
 *.pyc
 .DS_Store
+agent/models.json

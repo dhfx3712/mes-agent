@@ -52,7 +52,7 @@ exec python3 scripts/cli/my_script.py --arg value
 
 | 类型 | 生命周期 | 说明 | 示例 |
 |------|---------|------|------|
-| **cli** | 按需调用 | 命令行客户端，每次调用启动子进程 | todo_create.py / remind_query.py / daily21_report.py |
+| **cli** | 按需调用 | 命令行客户端，每次调用启动子进程 | todo_create.py / daily21_report.py |
 | **one-shot** | 按需调用 | 普通业务脚本，每次调用独立运行 | skill 子脚本 |
 
 ---
@@ -66,8 +66,7 @@ scripts/
 └── utils/         # 工具函数类
 ```
 
-> 当前核心脚本已迁移至 `scripts/cli/`。
-> `flow/`、`agent/` 等旧目录保留作为回滚备选。
+> 旧自建框架（`flow/`、`agent/`、`skill/`、`intent/`）已归档至 `_archive/`，保留作为回滚备选。
 
 ---
 
@@ -80,14 +79,6 @@ scripts/
 ```
 用户输入 → AI 提取参数(title/time/priority/content/执行人)
   → exec scripts/cli/todo_create.py '<slots>' '<ctx>'
-    → common/storage.py → 飞书 Bitable
-```
-
-#### 查询提醒
-
-```
-用户输入 → AI 提取参数(days/user_id)
-  → exec scripts/cli/remind_query.py '<slots>' '<ctx>'
     → common/storage.py → 飞书 Bitable
 ```
 
@@ -107,18 +98,17 @@ cron 触发 → exec scripts/cli/daily21_report.py --send
 
 ### 架构说明
 
-当前架构已从自建框架（`run_flow.py` → `flow/` → `agent/` → `skill/`）
-升级为独立 CLI 脚本，直接调用 `common/storage.py` 数据层：
+当前架构为独立 CLI 脚本，直接调用 `common/storage.py` 数据层：
 
 ```
-AI 层（SOUL.md 路由表）
+AI 层（AGENTS.md 路由表）
   ↓ exec scripts/cli/<flow>.py '<slots>' '<ctx>'
 脚本层（scripts/cli/）
   ↓
 数据层（common/storage.py）→ 飞书 Bitable
 ```
 
-旧版 `run_flow.py`、`flow/`、`agent/` 目录保留作为回滚备选。
+> 架构模式详情见 `ARCHITECTURE.md`。
 
 ---
 
@@ -148,23 +138,6 @@ AI 层（SOUL.md 路由表）
     "title": "待办标题",
     "priority": "🔴P0"
   }
-}
-```
-
-#### 查询提醒
-
-```json
-{
-  "status": "success",
-  "data": [
-    {
-      "record_id": "recXXX",
-      "title": "待办标题",
-      "deadline": "2026-06-17",
-      "priority": "🔴P0",
-      "assignee": "沈小茜"
-    }
-  ]
 }
 ```
 

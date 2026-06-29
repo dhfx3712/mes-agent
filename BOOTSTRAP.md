@@ -1,12 +1,16 @@
 # BOOTSTRAP.md - 启动引导
 
+> **职责**：定义项目启动就绪检查清单和环境配置步骤。
+
+---
+
 ## 项目概览
 
 | 项目 | 内容 |
 |------|------|
 | 项目名 | mes-agent |
-| 业务描述 | 办公任务管理机器人，负责新增待办、查询提醒、21点自动日报 |
-| 架构模式 | hub-and-spoke（1 主 + 3 子：todo/remind/daily21） |
+| 业务描述 | 办公任务管理机器人，负责新增待办、21点自动日报 |
+| 架构模式 | hub-and-spoke（1 主 + 2 子：todo/daily21） |
 | 数据底座 | 飞书多维表格（Bitable） |
 
 ---
@@ -14,9 +18,9 @@
 ## 就绪检查清单
 
 ### 配置就绪
-- [x] `CONFIG.md` — 飞书 Bitable 配置已填写
-- [ ] `datas/config.json` — TODO: 从 CONFIG.md 迁移
-- [ ] `datas/config.schema.json` — TODO: 新增配置校验规则
+- [x] `datas/config.json` — 全局配置已就绪
+- [x] `datas/config.schema.json` — 配置校验规则已就绪
+- [x] `CONFIG.md` — 配置参考文档已就绪
 
 ### 数据底座就绪
 - [x] 飞书多维表格已创建（app_id: IR19b1JZJa1shNsA9zCc3QIMnEh）
@@ -27,48 +31,36 @@
 - [x] `memory/MEMORY.md` — 已创建
 - [x] `memory/README.md` — 已创建
 - [x] `memory/entities/` — 已创建
-- [ ] 首次会话后自动生成 `memory/YYYY-MM-DD.md` 会话日志
+- [x] 会话日志自动生成
 
 ### 脚本就绪
 - [x] Python 虚拟环境已创建（`scripts/.venv/`）
-- [ ] 依赖已安装（`scripts/requirements.txt`）
-- [x] 业务脚本已编写（`scripts/cli/` + `common/`）
-- [ ] 脚本输入输出格式符合集成契约
+- [x] 依赖已安装（`scripts/requirements.txt`）
+- [x] 2 个 CLI 脚本已实现（todo_create / daily21_report）
+- [x] 脚本输入输出格式已标准化为 JSON
 
 ### 定时任务就绪
-- [x] daily21 日报 cron 已注册（OpenClaw cron job `mes-daily21-report`）
+- [x] daily21 日报 cron 已注册（每天 21:00 Asia/Shanghai）
 - [x] 任务触发动作已验证
-- [ ] 失败处理策略已确认
 
 ### 架构就绪
-- [ ] `ARCHITECTURE.md` — TODO: 新增架构设计文档
-- [ ] 状态机定义与实际逻辑一致
-- [ ] 数据流与实际实现一致
-
-### 复杂业务就绪（scripts/cli/ 独立脚本）
-- [x] 3 个 CLI 脚本已实现（todo_create / remind_query / daily21_report）
+- [x] `ARCHITECTURE.md` — 架构设计文档已创建
+- [x] 数据流与实际实现一致
 - [x] 配置集中化（`datas/config.json` + `common/config.py`）
-- [x] 旧自建框架已归档至 `_archive/`
-- [x] SOUL.md 路由表已配置（AI 只做意图识别 + 参数提取）
+
+### 文档治理就绪
+- [x] `DOCS.md` — 文档治理规则已创建
+- [x] 各文档职责边界清晰，无内容交叉
 
 ---
 
 ## 首次启动流程
 
 ```
-Step 1: 确认配置  →  检查 CONFIG.md 飞书配置
+Step 1: 确认配置  →  检查 datas/config.json
 Step 2: 连接底座  →  验证飞书 Bitable 可正常读写
 Step 3: 测试脚本  →  逐个运行 scripts/cli/ 下的脚本验证
 Step 4: 注册 cron →  注册 daily21 定时任务
-Step 5: 验收指令  →  逐条测试 TOOLS.md 中的指令
+Step 5: 验收指令  →  逐条测试功能
 Step 6: 正式使用  →  开始录入数据
 ```
-
----
-
-## 已知待办
-
-- [ ] CONFIG.md → `datas/config.json` + `datas/config.schema.json` 迁移
-- [ ] 新增 `ARCHITECTURE.md` 架构设计文档
-- [x] 自建框架（intent/flow/skill/agent）→ 独立 CLI 脚本迁移完成
-- [ ] 脚本输入输出格式标准化为 JSON
